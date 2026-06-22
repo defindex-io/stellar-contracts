@@ -1,9 +1,0 @@
-_book/
-book/
-node_modules/
-.git/
-.gitignore
-*.pdf
-RENDERING.md
-RENDERING.pdf
-

@@ -1,2 +1,0 @@
-export const RISK_TOLERANCE_FACTOR = 0.8;
-export const RISK_CHECK_INTERVAL_MS = 5000;

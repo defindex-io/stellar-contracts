@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["StrategyError"],"mod":["event"],"struct":["DeFindexStrategyClient","Spec"],"trait":["DeFindexStrategyTrait"]};
