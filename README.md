@@ -1,4 +1,7 @@
 # DeFindex Contracts
+
+> This repository was moved out of the [paltalabs/defindex](https://github.com/paltalabs/defindex) monorepo into its own repository for better maintainability and separation of concerns.
+
 To use this application use the Defindex Docker container by running:
  ``` bash
 docker compose up -d #Start the containers
