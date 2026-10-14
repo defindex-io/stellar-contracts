@@ -26,6 +26,7 @@ Cargo workspace members: `common`, `strategies/*`, `vault`, `factory`, `integrat
 | `configs.json`, `public/` | Network config and checked-in deployed addresses. |
 | `soroswap/`, `strategies/external_wasms/` | Vendored third-party WASM for tests and clients. |
 | `docs/` | Knowledge base, audit PDF, and `docs/modules/`. |
+| `skills/building-defindex-strategies/` | Shareable agent skill for third-party strategy authors, plus a standalone `example/` strategy crate (not a workspace member) tested against the real vault WASM with `cargo test --features vault-it`. Update it when the vault's strategy-facing behavior changes. |
 
 ## Build, test, deploy
 
