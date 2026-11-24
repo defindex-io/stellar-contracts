@@ -2,6 +2,7 @@ import {
   Account,
   Keypair,
   rpc,
+  SorobanDataBuilder,
   Transaction,
   TransactionBuilder,
   xdr,
@@ -25,7 +26,7 @@ export async function signWithKeypair(
 ): Promise<string> {
   const tx = new Transaction(txXdr, passphrase);
   tx.sign(source);
-  return tx.toXDR();
+  return tx.toXdr();
 }
 
 export async function invoke(
@@ -35,7 +36,7 @@ export async function invoke(
 ): Promise<any> {
   const txBuilder = await createTxBuilder(source);
   if (typeof operation === "string") {
-    operation = xdr.Operation.fromXDR(operation, "base64");
+    operation = xdr.Operation.fromXdr(operation, "base64");
   }
   txBuilder.addOperation(operation);
   const tx = txBuilder.build();
@@ -48,7 +49,7 @@ export async function invokeTransaction(
   sim: boolean
 ) {
   // simulate the TX
-  console.log(tx.toXDR());
+  console.log(tx.toXdr());
   const simulation_resp = await loadedConfig.rpc.simulateTransaction(tx);
   if (rpc.Api.isSimulationError(simulation_resp)) {
     // No resource estimation available from a simulation error. Allow the response formatter
@@ -61,27 +62,31 @@ export async function invokeTransaction(
   }
 
   // assemble and sign the TX
-  const txResources = simulation_resp.transactionData.build().resources();
+  const txResources = simulation_resp.transactionData.build().resources;
   simulation_resp.minResourceFee = (
     Number(simulation_resp.minResourceFee) + 10000000
   ).toString();
   const sim_tx_data = simulation_resp.transactionData
     .setResources(
-      txResources.instructions() == 0 ? 0 : txResources.instructions() + 500000,
-      txResources.diskReadBytes(),
-      txResources.writeBytes()
+      txResources.instructions == 0 ? 0 : txResources.instructions + 500000,
+      txResources.diskReadBytes,
+      txResources.writeBytes
     )
     .build();
   const assemble_tx = rpc.assembleTransaction(tx, simulation_resp);
-  sim_tx_data.resourceFee(
-    xdr.Int64.fromString(
-      (Number(sim_tx_data.resourceFee().toString()) + 100000).toString()
+  // XDR fields are readonly since SDK v17, so the resource fee bump goes
+  // through a builder seeded with sim_tx_data instead of mutating it.
+  const bumped_tx_data = new SorobanDataBuilder(sim_tx_data)
+    .setResourceFee(
+      xdr.Int64.fromString(
+        (Number(sim_tx_data.resourceFee.toString()) + 100000).toString()
+      )
     )
-  );
-  const prepped_tx = assemble_tx.setSorobanData(sim_tx_data).build();
+    .build();
+  const prepped_tx = assemble_tx.setSorobanData(bumped_tx_data).build();
   prepped_tx.sign(source);
-  const tx_hash = prepped_tx.hash().toString("hex");
-  console.log('🛑 SIGNED TX:', prepped_tx.toXDR());
+  const tx_hash = xdr.encodeBytes(prepped_tx.hash(), "hex");
+  console.log('🛑 SIGNED TX:', prepped_tx.toXdr());
 
   console.log("submitting tx...");
   let response: txResponse = await loadedConfig.rpc.sendTransaction(prepped_tx);
@@ -127,15 +132,15 @@ export const getCurrentTimePlusOneHour = () => {
 };
 
 export function getTransactionBudget(tx: any): { instructions: number, readBytes: number, writeBytes: number } {
-  const resources = tx.envelopeXdr.value().tx().ext().value().resources()
+  const resources = tx.envelopeXdr.value.tx.ext.value.resources
   const warningTolerance = 0.85
   const MAXWRITEBYTES = 132096
   const MAXREADBYTES = 200000
   const MAXINSTRUCTIONS = 100000000
   const budget= {
-      instructions: resources.instructions(),
-      readBytes: resources.diskReadBytes(),
-      writeBytes: resources.writeBytes(),
+      instructions: resources.instructions,
+      readBytes: resources.diskReadBytes,
+      writeBytes: resources.writeBytes,
   }
   const getPercentage = (value: number, max: number)=>{
       return (value * 100)/max

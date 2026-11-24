@@ -622,7 +622,7 @@ export async function rebalanceVault(deployedVault: string, instructions: Instru
       return { result: rebalanceResult, status: true, ...budget };
     }
     else {
-      console.log(red, 'Rebalance failed:', rebalanceResult.errorResult.result());
+      console.log(red, 'Rebalance failed:', rebalanceResult.errorResult.result);
       throw rebalanceResult.errorResult;
     }
   } catch (error) {
