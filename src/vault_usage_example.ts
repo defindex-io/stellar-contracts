@@ -104,7 +104,7 @@ const invest = async () => {
       return { result: rebalanceResult, status: 'ok' };
     }
     else {
-      console.error('Invest failed:', rebalanceResult.errorResult.result());
+      console.error('Invest failed:', rebalanceResult.errorResult.result);
       throw rebalanceResult.errorResult;
     }
   } catch (error: any) { 
@@ -140,7 +140,7 @@ const unwind = async () => {
       return { result: rebalanceResult, status: 'ok' };
     }
     else {
-      console.error('Unwind failed:', rebalanceResult.errorResult.result());
+      console.error('Unwind failed:', rebalanceResult.errorResult.result);
       throw rebalanceResult.errorResult;
     }
 

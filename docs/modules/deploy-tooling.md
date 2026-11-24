@@ -2,7 +2,7 @@
 
 > **Living document.** Read this before modifying the module. Update it in the same change whenever the module's behavior, endpoints, files, or dependencies change.
 
-**Source:** `src/`, `bash/`, `configs.json`, `public/`, `package.json` · **Last verified:** 2026-09-05
+**Source:** `src/`, `bash/`, `configs.json`, `public/`, `package.json` · **Last verified:** 2026-11-24
 
 The prose walkthrough of the deploy sequence lives in [`../../README.md`](../../README.md) sections "Deployments" through "Full deployment sequence". Several of its paths are stale, see Gotchas.
 
@@ -75,7 +75,9 @@ Rust build entry points, all requiring the `stellar` CLI on PATH: `make build` /
 
 ## Dependencies
 
-npm (`package.json:34`-`:36`): `@stellar/stellar-sdk ^14.0.0`, `dotenv ^16.4.5`. Dev: `typescript ^5.3.3`, `ts-node`, `eslint`, `prettier`, `@stellar/tsconfig`.
+npm (`package.json:34`-`:36`): `@stellar/stellar-sdk ^17.4.0`, `dotenv ^16.4.5`. Dev: `typescript ^5.3.3`, `ts-node`, `eslint`, `prettier`, `@stellar/tsconfig`.
+
+Runtime: Node `>=22.12.0`, the `engines.node` floor of `@stellar/stellar-sdk` 17.x. Yarn classic refuses to install on an older Node.
 
 External services and contracts referenced: Stellar Horizon and Soroban RPC (`configs.json`), Friendbot on testnet and futurenet, the Soroswap router (`soroswap_router` key), Blend pools (`blend_pool_*` keys and `blend_deploy_config.json`), and `https://rpc.lightsail.network` hardcoded in `bash/deploy-blend-strategy.sh:36`.
 
@@ -93,6 +95,8 @@ Calls into: the DeFindex **factory** (`create_defindex_vault`) and **vault** con
 - **Mainnet has no `soroban_rpc_url` in `configs.json`.** That is intentional: mainnet reads `MAINNET_RPC_URL` from `.env` (`src/utils/env_config.ts:138`). The README's config table does not mention this split.
 - **Strategy address keys are case-inconsistent across networks.** `public/testnet.contracts.json` uses uppercase (`USDC_blend_strategy`, line 4) while `public/mainnet.contracts.json` uses lowercase with a pool suffix (`usdc_blend_autocompound_fixed_strategy`, line 4). `src/deploy_vault.ts:46` builds the key from the raw CLI argument, so the asset argument's casing matters.
 - **`public/deprecated.contracts.json` holds retired yieldblox strategy addresses.** Do not treat it as live.
+- **SDK 17 XDR values are read-only class instances.** Fields and union arms are properties, not methods (`resources.instructions`, not `resources.instructions()`), enums are singletons (`xdr.ContractDataDurability.persistent`), and returned bytes are `Uint8Array`, so hex goes through `xdr.encodeBytes(bytes, "hex")`, never `.toString("hex")`. `invoke()` returns `Promise<any>` (`src/utils/tx.ts:36`), so `tsc` does not check what callers do with its result: a leftover `.foo()` accessor compiles and throws at runtime. `invokeTransaction` raises the simulated resource fee through a fresh `SorobanDataBuilder` (`src/utils/tx.ts:79`) because the data cannot be mutated in place.
+- **`bumpContractInstance` / `bumpContractCode` have no callers in `src/`** (`src/utils/contract.ts:181`, `:217`). On SDK 14.6.1 they threw while encoding, because they passed `new xdr.ExtensionPoint(0)` as `SorobanTransactionData.ext`. They now pass `xdr.SorobanTransactionDataExt.v0()` (`src/utils/contract.ts:206`, `:240`) and encode, but have not been run against a network since.
 - **`node_modules/` is not in `.gitignore`** (`.gitignore` lists only `target`, `.soroban`, `**/test_snapshots/**`, `.vscode`). Be careful before `git add -A`.
 
 ## Testing

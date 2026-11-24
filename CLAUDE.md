@@ -36,6 +36,7 @@ Needs a Rust toolchain with the `wasm32v1-none` target and the `stellar` CLI on 
 - `make test` builds first, then runs `cargo test` per subdir (`Makefile:12`). The build is **mandatory**: unit and integration tests `contractimport!` the optimized WASM from `target/wasm32v1-none/release/` (`vault/src/test.rs:17`, `integration-test/src/vault.rs:3`).
 - `make fmt` runs `cargo fmt --all --check` per subdir (`Makefile:17`).
 - Deploy scripts (`package.json:5`-`:19`), each taking `<network>` as the first CLI arg: `deploy-factory`, `deploy-blend`, `deploy-strategies`, `deploy-vault`, `multi-deploy-blend`, `publish-addresses`. On-chain smoke tests: `yarn test <network> -a` (flags at `src/tests/mainTest.ts:137`).
+- The TypeScript tooling needs Node `>=22.12.0`, the `engines.node` floor of `@stellar/stellar-sdk` 17.x. `npx tsc` is the offline check for `src/`; every other script touches a live network.
 - `bash/deploy-blend-strategy.sh` deploys a mainnet Blend strategy from an already-uploaded WASM hash via the `stellar` CLI.
 - Env vars (`.env.example`): `DEPLOYER_SECRET_KEY`, `BLEND_DEPLOYER_SECRET_KEY`, `BLEND_KEEPER_SECRET_KEY`, `SOROSWAP_MINT_SECRET_KEY`, `TEST_USER`, `MAINNET_RPC_URL`.
 - `package.json:6`'s `yarn build` calls `docker-compose`, but no compose file exists in this repo. Use `make build`.
@@ -71,7 +72,7 @@ Needs a Rust toolchain with the `wasm32v1-none` target and the `stellar` CLI on 
 | published to | **crates.io `defindex-strategy-core` 0.2.0** | The strategy interface other repos implement | `strategies/core/Cargo.toml:2`, `:4`, `:8` |
 | origin | **`paltalabs/defindex` monorepo** | This repo was split out of it; still the declared Cargo `repository` | `README.md:3`; `Cargo.toml:12` |
 | deployed | **Stellar mainnet / testnet** | Checked-in factory, strategy and vault addresses consumed by any SDK, API or frontend that reads DeFindex on-chain state | `public/mainnet.contracts.json`, `public/testnet.contracts.json`, `public/deprecated.contracts.json` |
-| depends on | **`@stellar/stellar-sdk` ^14.0.0** | All deploy and on-chain test tooling | `package.json:35` |
+| depends on | **`@stellar/stellar-sdk` ^17.4.0** | All deploy and on-chain test tooling | `package.json:35` |
 
 No DeFindex SDK, API or frontend repository is referenced from this codebase. Consumers of the contract interface are not named in source here.
 
